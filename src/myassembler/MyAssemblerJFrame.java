@@ -7,6 +7,7 @@ package myassembler;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -26,7 +27,6 @@ public class MyAssemblerJFrame extends javax.swing.JFrame implements Platform {
         initComponents();
         jLabel_input.setVisible(false);
         jTextField_input.setVisible(false);
-        System.out.println("constructor");
         
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -54,37 +54,39 @@ public class MyAssemblerJFrame extends javax.swing.JFrame implements Platform {
         
     }
     
-    Boolean inputReady;
     String technicalString;
     
-    public void inputHandler(String receiver){
-            technicalString=receiver;
-            jLabel_input.setVisible(true);
-            jTextField_input.setVisible(true);
-            jTextField_input.requestFocus();
-            jButton_open.setEnabled(false);
-            jButton_run.setEnabled(false);
-            jTextArea_main.setEnabled(false);
-            /*synchronized (inputReady){
-            while (!inputReady){
-                try {
-                    inputReady.wait();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(MyAssemblerJFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            };
-            }
-            jLabel_input.setVisible(false);
-            jTextField_input.setVisible(false);
-            jButton_open.setEnabled(true);
-            jButton_run.setEnabled(true);
-            jTextArea_main.setEnabled(true);
-            inputReady=false;*/
-};
+    private static final class Lock { }
+    private final Object lock = new Lock();
     
+    @Override
+    public void inputHandler(String receiver){
+        technicalString=receiver;
+        jTextField_input.setVisible(true);
+        jLabel_input.setVisible(true);
+        jTextField_input.requestFocus();
+        jButton_open.setEnabled(false);
+        jButton_run.setEnabled(false);
+        jTextArea_main.setEnabled(false);
+        synchronized(lock){    
+            try {
+                lock.wait();}
+            catch (Exception e) {System.out.println(e);}
+        }                
+        jLabel_input.setVisible(false);
+        jTextField_input.setVisible(false);
+        jButton_open.setEnabled(true);
+        jButton_run.setEnabled(true);
+        jTextArea_main.setEnabled(true); 
+    };
+    
+    /**
+     *
+     * @param sender
+     */
+    @Override
     public void outputHandler(String sender){
         jTextArea_main.append(MyAssembler.l.regsAndVars.get(sender).toString()+"\n");
-        System.out.println(jTextArea_main.getText());
     };
 
     /**
@@ -107,6 +109,7 @@ public class MyAssemblerJFrame extends javax.swing.JFrame implements Platform {
                 boolean warningDisplayed=false;
                 super.replaceSelection(content);
                 String text = getText();
+                int result=0;
                 StringBuffer buf = new StringBuffer(text);
                 char c;
                 int index=0;
@@ -124,119 +127,125 @@ public class MyAssemblerJFrame extends javax.swing.JFrame implements Platform {
                     }
                 }
                 text=buf.toString();
-                int result=Integer.parseInt(text);
-                if ( result > Integer.MAX_VALUE && result<Integer.MIN_VALUE){
-                    warningLabel.setText("the value exceeds integer capacity");
-                } else {if (!warningDisplayed) warningLabel.setText("");}
                 setText(text);
-            }
-        };
-        jLabel_input = new javax.swing.JLabel();
-        warningLabel = new javax.swing.JLabel();
-        jButton_exit = new javax.swing.JButton();
-        jLabel_fileName = new javax.swing.JLabel();
+                /*try{
+                    //if (text.length()>0)
+                    result=Integer.parseInt(text);
+                    setText(text);
+                    //if ( result > Integer.MAX_VALUE && result<Integer.MIN_VALUE){
+                    } catch (NumberFormatException e) {
+                        warningLabel.setText("the value exceeds integer capacity, will be turned to zero");
+                        if (!warningDisplayed) warningLabel.setText("");
+                        setText("0");
+                    }*/
+                }
+            };
+            jLabel_input = new javax.swing.JLabel();
+            warningLabel = new javax.swing.JLabel();
+            jButton_exit = new javax.swing.JButton();
+            jLabel_fileName = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("myAssembler v.1");
+            setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+            setTitle("myAssembler v.1");
 
-        jTextArea_main.setColumns(20);
-        jTextArea_main.setRows(5);
-        jScrollPane1.setViewportView(jTextArea_main);
+            jTextArea_main.setColumns(20);
+            jTextArea_main.setRows(5);
+            jScrollPane1.setViewportView(jTextArea_main);
 
-        jLabel_logo.setText("myAssembler v.1");
+            jLabel_logo.setText("myAssembler v.1");
 
-        jButton_open.setText("Open");
-        jButton_open.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_openActionPerformed(evt);
-            }
-        });
+            jButton_open.setText("Open");
+            jButton_open.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    jButton_openActionPerformed(evt);
+                }
+            });
 
-        jButton_run.setText("Run");
-        jButton_run.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_runActionPerformed(evt);
-            }
-        });
+            jButton_run.setText("Run");
+            jButton_run.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    jButton_runActionPerformed(evt);
+                }
+            });
 
-        jTextField_input.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField_inputActionPerformed(evt);
-            }
-        });
+            jTextField_input.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    jTextField_inputActionPerformed(evt);
+                }
+            });
 
-        jLabel_input.setText("input");
+            jLabel_input.setText("input");
 
-        jButton_exit.setText("Exit");
-        jButton_exit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton_exitActionPerformed(evt);
-            }
-        });
+            jButton_exit.setText("Exit");
+            jButton_exit.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    jButton_exitActionPerformed(evt);
+                }
+            });
 
-        jLabel_fileName.setText("no file");
+            jLabel_fileName.setText("no file");
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel_logo)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel_input)
-                                .addGap(33, 33, 33)
-                                .addComponent(jTextField_input, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+            javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+            jPanel1.setLayout(jPanel1Layout);
+            jPanel1Layout.setHorizontalGroup(
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel_logo)
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addComponent(jLabel_input)
+                                    .addGap(33, 33, 33)
+                                    .addComponent(jTextField_input, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addComponent(jButton_open)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jButton_run)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabel_fileName)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton_exit)))
+                    .addContainerGap())
+            );
+            jPanel1Layout.setVerticalGroup(
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(jLabel_logo)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jButton_open)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton_run)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel_fileName)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton_exit)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jLabel_logo)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton_open)
-                    .addComponent(jButton_run)
-                    .addComponent(jButton_exit)
-                    .addComponent(jLabel_fileName))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jTextField_input, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel_input))
-                    .addComponent(warningLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(52, 52, 52))
-        );
+                        .addComponent(jButton_exit)
+                        .addComponent(jLabel_fileName))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jTextField_input, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel_input))
+                        .addComponent(warningLabel))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(52, 52, 52))
+            );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
+            javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+            getContentPane().setLayout(layout);
+            layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            );
+            layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            );
 
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
+            pack();
+        }// </editor-fold>//GEN-END:initComponents
 
     private void jButton_openActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_openActionPerformed
         JFileChooser chooser = new JFileChooser();
@@ -255,21 +264,37 @@ public class MyAssemblerJFrame extends javax.swing.JFrame implements Platform {
     }//GEN-LAST:event_jButton_openActionPerformed
 
     private void jButton_runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_runActionPerformed
-        try {
-            MyAssembler.runProgram();
-            System.out.println("run over");
-        }
-        catch (Exception e){jTextArea_main.append("syntax error at line "+MyAssembler.curLine+"\n"+ e+"\n");}
+        jTextArea_main.setText("");
+        new Thread (() -> {
+            try {
+                MyAssembler.runProgram();
+            } catch (InvocationTargetException e) {
+                jTextArea_main.append("syntax error at line "+
+                    MyAssembler.curLine+"\n"+ e.getTargetException()+"\n");
+                e.printStackTrace();
+            } catch (Exception e){
+                jTextArea_main.append("syntax error at line "+
+                    MyAssembler.curLine+"\n"+ e+"\n");
+                e.printStackTrace();
+            }
+        }).start();
     }//GEN-LAST:event_jButton_runActionPerformed
 
     private void jTextField_inputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField_inputActionPerformed
-        //synchronized (inputReady){
-        inputReady=true;
-        int input=Integer.parseInt(jTextField_input.getText());
-        jTextField_input.setText("");
-        MyAssembler.l.regsAndVars.put(technicalString, input);
-        inputReady.notifyAll();
-        //}
+        synchronized (lock){
+            int input;
+            try{
+                input=Integer.parseInt(jTextField_input.getText());
+            } catch (Exception e) {
+                input=0;
+            }
+            //if (jTextField_input.getText().equals("")) input=0;
+            //else input=Integer.parseInt(jTextField_input.getText());
+            jTextField_input.setText("");
+            warningLabel.setText("");
+            MyAssembler.l.regsAndVars.put(technicalString, input);
+            lock.notifyAll();
+        }
     }//GEN-LAST:event_jTextField_inputActionPerformed
 
     private void jButton_exitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_exitActionPerformed
@@ -282,13 +307,12 @@ public class MyAssemblerJFrame extends javax.swing.JFrame implements Platform {
     public void main(String args[]) {
 
         /* Create and display the form */
-        System.out.println("main");
-        this.setVisible(true);
-        /*java.awt.EventQueue.invokeLater(new Runnable() {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
-                a.setVisible(true);
+                MyAssemblerJFrame.this.setVisible(true);
             }
-        });*/
+        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

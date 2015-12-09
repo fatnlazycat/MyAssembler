@@ -1,1 +1,2 @@
 myassembler.MyAssemblerJFrame
+myassembler.ConsolePlatform

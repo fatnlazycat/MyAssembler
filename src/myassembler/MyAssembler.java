@@ -29,6 +29,7 @@ public class MyAssembler{
     static final String platformsFile="platforms.txt";
     static String[] listOfPlatforms;
     static int curLine;
+    static boolean initialized=false;
     
     static void readFile(File fileToRun)throws IOException{
         int countLines=0;
@@ -45,7 +46,6 @@ public class MyAssembler{
         String[] currentLine;
         for (curLine=0;curLine<fileContents.length;curLine++){
             currentLine=fileContents[curLine].trim().split(" +", 2);
-            System.out.println(currentLine[0]+"   "+currentLine[1]);
             for (Method m:dictionary){
                     if (m.getName().equals(currentLine[0])){
                         Object[] args=currentLine[1].split(" *, *");
@@ -84,6 +84,7 @@ public class MyAssembler{
             Platform a = (Platform)platformClass.newInstance();
             l=new Language(a);
             dictionary=l.getClass().getMethods();
+            initialized=true;
         }catch(Exception e){System.out.println(e);}
     }
 }
